@@ -23,3 +23,5 @@ more accurately represented what I was doing with the data, as well as types
 that were guaranteed across platforms that would be of a specific size. Though
 this code only works on Windows, doing this would make it much simpler to port
 it over to Linux or other systems.
+
+This code was developed in November/December 2019.

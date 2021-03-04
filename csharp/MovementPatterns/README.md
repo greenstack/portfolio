@@ -9,3 +9,5 @@ types.
 
 I was responsible for the base Movement Pattern class in `MovementPattern.cs`.
 All samples included here were primarily developed by me.
+
+This code was developed in August 2019.
