@@ -11,3 +11,5 @@ This solution solved two problems: the issue of tracking untapped units and what
 a selected unit could do, as well as keeping the code clean and
 potentially giving me the option to expand the capabilities of the units and
 the actions available to them without too much headache.
+
+This code was developed from October to December 2018.
