@@ -39,8 +39,8 @@
         /// <summary>
         /// Causes a unit to be refreshed.
         /// </summary>
-        /// <param name="unit"></param>
-        /// <returns></returns>
+        /// <param name="unit">The unit to refresh.</param>
+        /// <returns>True if the unit's state was changed.</returns>
         bool Refresh(IActive unit);
     }
 }

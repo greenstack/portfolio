@@ -7,7 +7,7 @@ these states to keep track of this, as it helped me modify the behavior of the
 units on the board without having to resort to several potentially deep-nested
 if statements in the code.
 
-This solution solved two problems: the issue of tracking untapped units, what
-currently selected units were able to do, as well as keeping the code clean and
+This solution solved two problems: the issue of tracking untapped units and what
+a selected unit could do, as well as keeping the code clean and
 potentially giving me the option to expand the capabilities of the units and
 the actions available to them without too much headache.
