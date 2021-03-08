@@ -1,0 +1,218 @@
+<?php
+
+/**
+ * @file
+ */
+
+use Drupal\cfs_mail\Entity\TransitionMessage;
+use Drupal\Core\Utility\UpdateException;
+
+/**
+ * Implements hook_install().
+ */
+function cfs_mail_install() {
+
+}
+
+/**
+ * Add message configuration to the site.
+ *
+ * Implements hook_update_N().
+ */
+function cfs_mail_update_8001() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('cfs_mail.messages');
+  $messages = [
+    'order' => [
+      'workflow' => 'order_state',
+      'transitions' => [
+        'order_creation-order_pending_coach_approval' => [
+          'node_author_role' => [
+            'student',
+          ],
+          'send_to' => [
+            'author' => FALSE,
+            'coaches' => TRUE,
+          ],
+          'subject' => 'game time started',
+          'body' => 'placeholder text lol also :team :student :link',
+        ],
+        'order_pending_coach_approval-order_pending_requester_revision' => [
+          'node_author_role' => [
+            'student',
+          ],
+          'send_to' => [
+            'author' => TRUE,
+            'coaches' => FALSE,
+          ],
+          'subject' => "adult you were caught",
+          'body' => "the peaceful is willing to, d the superior is bad person! also :team :student :link",
+        ],
+        'order_pending_requester_revision-ordeR_pending_coach_approval' => [
+          'node_author_role' => [
+            'student',
+          ],
+          'send_to' => [
+            'author' => FALSE,
+            'coaches' => TRUE,
+          ],
+          'subject' => 'the ratio is prosperous',
+          'body' => 'the general space can always succeed to succeed. he is very deceitful. :team :student :link',
+        ],
+      ],
+    ],
+    'reimbursement' => [
+      'workflow' => 'order_state',
+      'transitions' => [],
+    ],
+  ];
+  $config->set('order', $messages['order']);
+  $config->set('reimbursement', $messages['reimbursement']);
+  $config->save(TRUE);
+}
+
+/**
+ * Update configuration to be somewhat more managable in code.
+ *
+ * Implements hook_update_N().
+ */
+function cfs_mail_update_8002() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('cfs_mail.messages');
+  $config->clear('order');
+  $config->clear('reimbursement');
+  $messages = [
+    'order' => [
+      'order_state' => [
+        'transitions' => [
+          'order_creation-order_pending_coach_approval' => [
+            'node_author_role' => [
+              'student',
+            ],
+            'send_to' => [
+              'author' => FALSE,
+              'coaches' => TRUE,
+            ],
+            'subject' => 'game time started',
+            'body' => 'placeholder text lol also :team :student :link',
+          ],
+          'order_pending_coach_approval-order_pending_requester_revision' => [
+            'node_author_role' => [
+              'student',
+            ],
+            'send_to' => [
+              'author' => TRUE,
+              'coaches' => FALSE,
+            ],
+            'subject' => "adult you were caught",
+            'body' => "the peaceful is willing to, d the superior is bad person! also :team :student :link",
+          ],
+          'order_pending_requester_revision-order_pending_coach_approval' => [
+            'node_author_role' => [
+              'student',
+            ],
+            'send_to' => [
+              'author' => FALSE,
+              'coaches' => TRUE,
+            ],
+            'subject' => 'the ratio is prosperous',
+            'body' => 'the general space can always succeed to succeed. he is very deceitful. :team :student :link',
+          ],
+        ],
+      ],
+    ],
+    'reimbursement' => [
+      'reimbursement_state' => [
+        'transitions' => [],
+      ],
+    ],
+  ];
+  $config->set('order', $messages['order']);
+  $config->set('reimbursement', $messages['reimbursement']);
+  $config->save(TRUE);
+}
+
+/**
+ * Removes the 'transitions' key and inserts a new key to allow for multiple rules per transition.
+ */
+function cfs_mail_update_8003() {
+  $config = \Drupal::configFactory()->getEditable('cfs_mail.messages');
+  $rawData = $config->getRawData();
+  foreach ($rawData as $node_type => $field) {
+    // This helps us clear the 'transition' key and remove it from config.
+    $config->clear($node_type);
+    foreach ($field as $field_name => $transition) {
+      $settings = $transition['transitions'];
+      // If the transitions key no longer exists, this update should have already been performed.
+      if ($settings === NULL) {
+        return;
+      }
+      foreach ($settings as $transition_name => $transition_settings) {
+        $words = preg_split("/[-_]/", $transition_name);
+        $new_key = "";
+        foreach ($words as $word) {
+          $new_key .= $word[0];
+        }
+        // Currently each transition can only have the one.
+        // When you look at this tomorrow, know that something has broken and you need to fix it.
+        // It's clearing all the config, not just some of it.
+        $new_key .= "_original";
+        \Drupal::logger('cfs_mail')->notice(print_r($settings, 1));
+        $config->set("$node_type.$field_name.$transition_name.$new_key", $transition_settings);
+      }
+    }
+  }
+  $config->save(TRUE);
+}
+
+/**
+ * Transforms the raw configuration into configuration entities, as it should
+ * have been done from the beginning.
+ */
+function cfs_mail_update_8101() {
+  $config = \Drupal::configFactory()->getEditable('cfs_mail.messages');
+  $rawData = $config->getRawData();
+  foreach ($rawData as $node_type => $nData) {
+    foreach ($rawData[$node_type] as $field => $fData) {
+      foreach ($rawData[$node_type][$field] as $transition => $tData) {
+        // Extract the workflow transition information. This can be shared
+        // among multiple transitions, so we can do this here and save it for
+        // later.
+        $workflows = explode('-', $transition);
+        $workflow_from = $workflows[0];
+        $workflow_to = $workflows[1];
+
+        foreach ($rawData[$node_type][$field][$transition] as $machine_name => $data) {
+          // Create a new entity. Extract the basic data.
+          $transition_message = TransitionMessage::create([
+            'id' => $machine_name,
+            'label' => $machine_name,
+            'node_type' => $node_type,
+            'field' => $field,
+
+          // Set the workflow transition information.
+            'workflow_from' => $workflow_from,
+            'workflow_to' => $workflow_to,
+
+          // Extract the message-specific data (things that typically aren't
+          // shared among other transitions).
+          // I believe that this should work.
+            'node_author_role' => $data['node_author_role'],
+            'recipients' => [
+              'author' => $data['send_to']['author'] ? "author" : 0,
+              'coach' => $data['send_to']['coach'] ? "coach" : 0,
+            ],
+            'subject' => $data['subject'],
+            'body' => $data['body'],
+          ]);
+
+          if (!$transition_message->save()) {
+            throw new UpdateException("Could not create the TransitionMessages from the given entities. You may have to do this manually.");
+          }
+        }
+      }
+    }
+  }
+  $config->delete();
+  $config->save();
+}

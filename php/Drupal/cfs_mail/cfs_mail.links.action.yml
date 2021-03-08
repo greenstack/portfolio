@@ -1,0 +1,11 @@
+entity.transition_message.add_form:
+  route_name: 'entity.transition_message.add_form'
+  title: 'Add transition message'
+  appears_on:
+    - entity.transition_message.collection
+
+cfs_mail.settings:
+  route_name: 'cfs_mail.settings'
+  title: 'Configure CFS Mail'
+  appears_on:
+    - entity.transition_message.collection

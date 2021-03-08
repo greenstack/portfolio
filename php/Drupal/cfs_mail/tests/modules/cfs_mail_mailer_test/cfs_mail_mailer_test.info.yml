@@ -1,0 +1,5 @@
+name: CFS Mail Mailer Test
+type: module
+description: Contains implementations for testing Mailer plugins.
+package: Testing
+core_version_requirement: ^8 || ^9

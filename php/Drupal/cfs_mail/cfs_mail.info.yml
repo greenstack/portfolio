@@ -1,0 +1,7 @@
+name: CFS Mail
+type: module
+description: Contains methods to send mail to coaches and students after certain actions.
+package: Capstone
+core: 8.x
+core_version_requirement: ^8 || ^9
+dependencies: smtp, mailsystem, workflow, cfs_forms

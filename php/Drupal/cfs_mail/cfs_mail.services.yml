@@ -1,0 +1,4 @@
+services:
+  plugin.manager.mailer:
+    class: Drupal\cfs_mail\Plugin\MailerManager
+    parent: default_plugin_manager

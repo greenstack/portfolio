@@ -1,0 +1,40 @@
+cfs_mail.transition_message.*:
+  type: config_entity
+  label: 'Transition Message config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'ID'
+    node_type:
+      type: string
+      label: 'Node bundle'
+    field:
+      type: string
+      label: 'Field'
+    workflow_from:
+      type: string
+      label: 'Workflow From State'
+    workflow_to:
+      type: string
+      label: 'Workflow to state'
+    node_author_role:
+      type: sequence
+      label: 'Node author roles'
+      sequence:
+        type: string
+        label: 'Role'
+    receipients:
+      type: sequence
+      label: 'Recipients'
+      sequence:
+        type: string
+        label: 'Recipient'
+    subject:
+      type: string
+      label: "Subject line"
+    body:
+      type: string
+      label: "Email body"

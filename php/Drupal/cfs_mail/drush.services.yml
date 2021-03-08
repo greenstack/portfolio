@@ -1,0 +1,5 @@
+services:
+  cfs_mail.commands:
+    class: \Drupal\cfs_mail\Commands\CfsMailCommands
+    tags:
+      - { name: drush.command }

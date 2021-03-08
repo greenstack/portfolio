@@ -1,0 +1,45 @@
+entity.transition_message.collection:
+  path: '/admin/config/cfs/mail'
+  defaults:
+    _entity_list: 'transition_message'
+    _title: 'CFS Mail configuration'
+  requirements:
+    _permission: 'configure mail'
+
+entity.transition_message.add_form:
+  path: '/admin/config/cfs/mail/add'
+  defaults:
+    _entity_form: 'transition_message.add'
+    _title: 'Add transition message'
+  requirements:
+    _permission: 'configure mail'
+
+entity.transition_message.edit_form:
+  path: '/admin/config/cfs/mail/{transition_message}/edit'
+  defaults:
+    _entity_form: 'transition_message.edit'
+    _title: 'Edit transition message'
+  requirements:
+    _permission: 'configure mail'
+
+entity.transition_message.delete_form:
+  path: '/admin/config/cfs/mail/{transition_message}/delete'
+  defaults:
+    _entity_form: 'transition_message.delete'
+    _title: 'Delete transition message'
+  requirements:
+    _permission: 'configure mail'
+
+cfs_mail.parse_test:
+  path: '/admin/testparse'
+  defaults:
+    _form: '\Drupal\cfs_mail\Form\ParseTester'
+  requirements:
+    _role: 'administrator'
+
+cfs_mail.settings:
+  path: '/admin/cfs/mail/settings'
+  defaults:
+    _form: '\Drupal\cfs_mail\Form\CFSSettingsForm'
+  requirements:
+    _permission: 'configure mail'

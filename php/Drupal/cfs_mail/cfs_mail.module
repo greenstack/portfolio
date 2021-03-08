@@ -1,0 +1,176 @@
+<?php
+
+/**
+ * @file
+ */
+
+use Drupal\cfs_mail\WorkflowDiscovery;
+use Drupal\Core\Form\FormState;
+use Drupal\cfs_mail\MailLogBase;
+use Drupal\node\NodeInterface;
+use Drupal\cfs_mail\Parser\MailParser;
+use Drupal\cfs_mail\Entity\TransitionMessage;
+use Drupal\user\Entity\User;
+
+/**
+ * Implements hook_mail().
+ */
+function cfs_mail_mail($key, &$message, $params) {
+  $message['from'] = \Drupal::config('cfs_mail.settings')->get('from_address');
+  $node = $params['node'];
+  $link = \Drupal::request()->getSchemeAndHttpHost() . "/node/" . $node->id();
+
+  $replacements = [
+    // User information.
+    ':author' => $params['owner'] instanceof User ? $params['owner']->getDisplayName() : $params['owner'],
+    ':editor' => $params['editor'],
+    // Information regarding directly to the site.
+    ':link' => $link,
+    ':host' => \Drupal::request()->getSchemeAndHttpHost(),
+  ];
+
+  \Drupal::moduleHandler()->alter('mail_tokens', $replacements, $params);
+
+  $transition_message = $params['transition_message'];
+  $message_body = MailParser::parse("cfs_mail_body", $transition_message->get('body'));
+
+  $subject = MailParser::parse("cfs_mail_subject", $transition_message->get('subject'));
+  $message['subject'] = t($subject, $replacements);
+  $message['body'][] = t($message_body, $replacements);
+  $message['headers']['Content-Type'] = 'text/html';
+  if (array_key_exists('cc', $params) && !empty($params['cc'])) {
+    $params['logger']->info("Sending as CC to " . $params['cc'] . " (transition: " . $transition_message->label() . ")");
+    $message['headers']['Cc'] = $params['cc'];
+  }
+  if (array_key_exists('bcc', $params) && !empty($params['bcc'])) {
+    $params['logger']->info("Sending as BCC to " . $params['bcc'] . " (transition: " . $transition_message->label() . ")");
+    $message['headers']['Bcc'] = $params['bcc'];
+  }
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function cfs_mail_node_insert(NodeInterface $node) {
+  sendMail($node);
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function cfs_mail_node_update(NodeInterface $node) {
+  sendMail($node);
+}
+
+/**
+ * Sends an email on node creation or node update using a TransitionMessage.
+ *
+ * @see Drupal\cfs_mail\Entity\TransitionMessage
+ *
+ * @param Drupal\node\NodeInterface $node
+ *   The node the mail system is reacting to.
+ *
+ * @param bool $isNewNode
+ *   Whether the node that was just created is new or not.
+ */
+function sendMail(NodeInterface $node) {
+  if (\Drupal::config('cfs_mail.settings')->get('disabled')) {
+    \Drupal::logger('cfs_mail')->warning("CFS Mail is enabled, but sending mail is disabled.");
+    return;
+  }
+
+  $transition_message_ids = \Drupal::entityQuery('transition_message')
+    ->condition('node_type', $node->getType())
+    ->execute();
+  if (empty($transition_message_ids)) {
+    return;
+  }
+
+  // Here, we need to find the corresponding field name, so as to be able to
+  // check and compare the workflows.
+  $transition_messages = [];
+  foreach ($transition_message_ids as $transition_message_id) {
+    $transition_message = TransitionMessage::load($transition_message_id);
+    $workflow_field = $transition_message->get('field');
+
+    $old_workflow = $node->original ? $node->original->$workflow_field->value : $transition_message->deduceWorkflow() . '_creation';
+    $new_workflow = $node->$workflow_field->value;
+
+    if ($transition_message->matchesTransition($workflow_field, $old_workflow, $new_workflow)) {
+      // Since this matches, add it to the valid transition messages to act on.
+      $transition_messages[$transition_message_id] = $transition_message;
+    }
+  }
+
+  // We don't need to continue if this node change doesn't match a transition message.
+  if (empty($transition_messages)) {
+    return;
+  }
+
+  // Set all the required parameters for finding author info, node info, team info, and so forth.
+  $params = [];
+  $params['node'] = $node;
+
+  $params['owner'] = $node->getOwner();
+  $params['editor'] = \Drupal::currentUser()->getDisplayName();
+
+  $params['cc'] = '';
+  $params['bcc'] = '';
+
+  $mailer_plugins = \Drupal::service('plugin.manager.mailer');
+  $mailer_plugin_defintions = $mailer_plugins->getDefinitions();
+
+  $params['logger'] = new MailLogBase();
+  foreach ($transition_messages as $tmid => $transition_message) {
+    // For each transition, we want to have a unique logger to keep track of things.
+    $transition_message->sendMessages($params, $mailer_plugin_defintions);
+    $params['logger']->end();
+    $params['logger']->reset();
+  }
+}
+
+/**
+ *
+ */
+function _get_tokens() {
+  $list = [
+    ':author' => 'Gets the username of the node author.',
+    ':editor' => 'Gets the username of the user editing the node.',
+    ':link' => 'Provides a link to the content.',
+    ':host' => 'The base url of the website, including the scheme (http or https).',
+  ];
+  \Drupal::moduleHandler()->alter('mail_token_list', $list);
+  return $list;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Allows the server to accept different options for workflow states when the
+ * selected workflow center is chosen.
+ */
+function cfs_mail_form_transition_message_add_form_alter(&$form, FormState $form_state, $form_id) {
+  $pre = $form_state->getValue('field');
+  $form_state->setValue('workflow_to', 'creation');
+  $workflow = explode('%', $pre)[0];
+  $form_state->setValue('workflow_from', 'creation');
+
+  $states = WorkflowDiscovery::getStates($workflow);
+  $replacement = [
+    '#type' => 'container',
+    '#attributes' => ['id' => 'states-wrapper'],
+  ];
+  $replacement['states']['workflow_from'] = [
+    '#type' => 'select',
+    '#title' => 'From State',
+    '#options' => $states,
+    '#required' => TRUE,
+  ];
+  $replacement['states']['workflow_to'] = [
+    '#type' => 'select',
+    '#title' => 'To State',
+    '#options' => $states,
+    '#required' => TRUE,
+  ];
+  $form['transition']['workflow']['states'] = $replacement;
+}

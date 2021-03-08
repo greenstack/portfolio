@@ -1,0 +1,13 @@
+cfs_mail.transitions:
+  title: CFS Mail Messages
+  description: 'Configure CFS Mail Messages'
+  route_name: entity.transition_message.collection
+  parent: system.admin_config_system
+  weight: 40
+
+cfs_mail.settings:
+  title: CFS Mail Settings
+  description: 'Configure CFS Mail Settings'
+  route_name: cfs_mail.settings
+  parent: system.admin_config_systemd
+  weight: 41

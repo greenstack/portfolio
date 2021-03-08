@@ -1,0 +1,4 @@
+configure mail:
+  title: 'Configure CFS Mail'
+  description: 'Allows the user to configure CFS Mail.'
+  restrict access: TRUE
