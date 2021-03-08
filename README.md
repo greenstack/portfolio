@@ -5,7 +5,6 @@ not every line of code in a sample may be mine. When this is the case, I have
 made mention of that in the sample's `README`; that said, the files I've
 included are those where I've written more than 95% of the code.
 
-
 # Directory Structure
 The samples in this repository are sorted first by language, then by
 framework/engine, if applicable. For example, all Unreal Engine code that I've
