@@ -1,5 +1,5 @@
 # CFS Mail
-During my work at (BYU Capstone)[https://capstone.byu.edu/], the administration
+During my work at [BYU Capstone](https://capstone.byu.edu/), the administration
 developed a need for a mailing system that would send students emails based on
 certain conditions. This Drupal module was my answer to that. The majority of this
 code was developed by me; however, a coworker provided a massive amount of help 

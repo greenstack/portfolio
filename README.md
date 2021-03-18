@@ -3,7 +3,8 @@ This repository contains code that I've worked on over time. Because many of
 these samples have come from projects that I've worked on with other people,
 not every line of code in a sample may be mine. When this is the case, I have
 made mention of that in the sample's `README`; that said, the files I've
-included are those where I've written more than 95% of the code.
+included are those where I've written more than 95% of the code (with a small
+exception in the CFS Mail module I've included).
 
 # Directory Structure
 The samples in this repository are sorted first by language, then by
