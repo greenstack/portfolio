@@ -1,5 +1,4 @@
 #pragma once
-#include "../DataStruct.h"
 #include <GLib/GLib.h>
 
 #include <math.h>
@@ -28,8 +27,6 @@ namespace Origin {
 		// @param maxy: the maximum y value.
 		// @param abs: whether or not the value must be positive.
 		static Vec2 random(int maxx, int maxy);
-
-		static Vec2 fromDir(Direction);
 		
 		// Returns the norm of this vector.
 		float norm() const;
