@@ -8,18 +8,18 @@ namespace Greenstack.Emerald.Containers;
 /// <typeparam name="T">The type of item to store.</typeparam>
 public class DeltaQueue<T>
 {
-    private class Item
-    {
-        public T Value;
-        public double TimeTilRelease;
-    }
+	private class Item
+	{
+		public T Value;
+		public double TimeTilRelease;
+	}
 
-    /// <summary>
-    /// The number of items in the queue.
-    /// </summary>
-    public int Count => _internalQueue.Count;
+	/// <summary>
+	/// The number of items in the queue.
+	/// </summary>
+	public int Count => _internalQueue.Count;
 
-    private readonly LinkedList<Item> _internalQueue = new();
+	private readonly LinkedList<Item> _internalQueue = new();
 
 	/// <summary>
 	/// Adds an item to the queue.
